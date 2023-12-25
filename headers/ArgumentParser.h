@@ -11,7 +11,13 @@
 
 class ArgumentParser {
 public:
-    GameMode getMode(char* str);
+    GameMode getMode();
+    char* getCmdOption(const std::string & option);
+    bool cmdOptionExists(const std::string& option);
+    ArgumentParser(int argc, char** argv);
+private:
+    int argc;
+    char** argv;
 };
 
 

@@ -2,6 +2,7 @@
 #include <cstring>
 #include <ctime>
 #include <vector>
+#include <thread>
 #include "headers/Game.h"
 #include "headers/Cell.h"
 #include "headers/GameMode.h"
@@ -9,24 +10,48 @@
 #include "headers/ArgumentParser.h"
 
 int main(int argc, char** argv) {
-    ArgumentParser parser;
+    ArgumentParser parser(argc, argv);
     Game * game;
 
-    switch(parser.getMode(argv[1])) {
-        case GameMode::BAD:
-            std::cout << "Bad argument! Only easy, medium or hard are allowed. Was: " << argv[0] << std::endl;
-            return -1;
-        default:
-            game = new Game(parser.getMode(argv[1]));
-            break;
+    if (parser.cmdOptionExists("--help")) {
+        std::cout << "The minesweeper game." << std::endl;
+        std::cout << "For running the game you should specify the --mode parameter." << std::endl;
+        std::cout << R"(--mode takes "easy", "medium" or "hard" options.)" << std::endl;
+        std::cout << "Easy mode: 9*9 field, 10 mines. Medium mode: 16*16 field, 40 mines. Hard mode: 31*16 field, 99 mines." << std::endl;
+        std::cout << "Game rules:" << std::endl;
+        std::cout << "There are 3 commands:" << std::endl;
+        std::cout << "1. open <x> <y> to open the cell on coordinates <x> <y>. Be careful, if you hit the mine, the game will end." << std::endl;
+        std::cout << "2. mark <x> <y> to mark the cell on coordinates <x> <y>." << std::endl;
+        std::cout << "3. unmark <x> <y> to unmark the cell on coordinates <x> <y>." << std::endl;
+        std::cout << R"("#" cell means closed cell, "?" cell means marked cell, a cell with a number means that there are exactly so much mines around this cell.)" << std::endl;
+
+        std::cout << "That's all. Good luck!" << std::endl;
+        return 0;
     }
 
 
+    //
+    GameMode mode;
+    try {
+        mode = parser.getMode();
+    } catch (std::invalid_argument &e) {
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
+
+    game = new Game(mode);
+
+    std::thread output(&Game::renderField, Game(mode));
+    std::thread compute(&Game::renderField, Game(mode));
+    std::thread input(&Game::renderField, Game(mode));
+
     while (game->isPlaying()) {
 
+        // output thread
         game->renderField();
 
-        // TODO: ask for input
+
+        // input thread
         std::string cmd;
         std::string line;
         std::vector<std::string> tokens;
@@ -46,6 +71,8 @@ int main(int argc, char** argv) {
 
         tokens.push_back(cmd);
 
+
+        // compute thread
         if (tokens[0] == "quit") {
             game->endGame();
             std::cout << "Game over!" << std::endl;

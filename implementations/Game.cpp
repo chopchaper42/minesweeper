@@ -53,10 +53,10 @@ void Game::renderField() {
                 } else if (cells[index]->isMarked()) {
                     std::cout << " ? ";
                 } else {
-                    if (cells[index]->withMine())
+                    /*if (cells[index]->withMine())
                         std::cout << " * ";
-                    else
-                        std::cout << " # ";
+                    else*/
+                    std::cout << " # ";
                 }
             }
         }
