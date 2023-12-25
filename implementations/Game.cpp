@@ -15,9 +15,18 @@ int from_y(int y) { return y == 0 ? 0 : y - 1; }
 int to_x(int x, int columns) { return x == columns - 1 ? x + 1 : x + 2; }
 int to_y(int y, int rows) { return y == rows - 1 ? y + 1 : y + 2; }
 
+/**
+ * returns the index of a cell with X, Y coordinates
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @return index
+ */
 int Game::getCellIndex(int x, int y) { return y * columns + x; }
 
 
+/**
+ * renders the field
+ */
 void Game::renderField() {
 
     if (columns > 9) {
@@ -72,7 +81,12 @@ void Game::renderField() {
 
 }
 
-// TODO: handle edge cases
+/**
+ * Calculates number of mines around the cell on X, Y coordinates
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @return number of mines around
+ */
 int Game::calculateMinesAround(int x, int y) {
     size_t counter = 0;
 
@@ -102,6 +116,11 @@ int Game::calculateMinesAround(int x, int y) {
     return counter;
 }
 
+/**
+ * Initializes the game field
+ * @param rows number of rows
+ * @param columns number of columns
+ */
 void Game::initField(size_t rows, size_t columns) {
     this->rows = rows;
     this->columns = columns;
@@ -112,10 +131,16 @@ void Game::initField(size_t rows, size_t columns) {
     plantMines();
 }
 
+/**
+ * @return number of cells on the field
+ */
 size_t Game::getCellsAmount() {
     return rows * columns;
 }
 
+/**
+ * @return true if the game is going, false if it has ended
+ */
 bool Game::isPlaying() const {
     return play;
 }
@@ -146,10 +171,16 @@ size_t Game::getMinesAmount() {
     }
 }
 
+/**
+ * Ends the game
+ */
 void Game::endGame() {
     play = false;
 }
 
+/**
+ * Randomly plants mines on the field
+ */
 void Game::plantMines() {
     std::srand(time(nullptr)); // use current time as seed for random generator
     int random_value = std::rand();
@@ -169,19 +200,35 @@ void Game::plantMines() {
     }
 }
 
+/**
+ * Marks the cell
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
 void Game::markCell(int x, int y) {
     cells[(y-1) * columns + (x-1)]->mark();
 }
 
+/**
+ * Unmarks the cell
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
 void Game::unmarkCell(int x, int y) {
     cells[(y-1) * columns + (x-1)]->unmark();
 }
 
+/**
+ * Opens the cell
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
 void Game::openCell(int x, int y) {
     // 1. if has mine -> end game
     int index = y * columns + x;
     if (cells[index]->withMine()) {
         endGame();
+        std::cout << "Boom!" << std::endl;
         return;
     }
     // 2. if no mine
@@ -191,6 +238,11 @@ void Game::openCell(int x, int y) {
 
 }
 
+/**
+ * Recursively opens cells around the X, Y cell if they have no mines
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
 void Game::tryOpen(int x, int y) {
     int index = y * columns + x;
 
@@ -213,6 +265,9 @@ void Game::tryOpen(int x, int y) {
         tryOpen(x, y + 1); // the bottom cell
 }
 
+/**
+ * @return true if the player won, false otherwise
+ */
 bool Game::isWin() {
     bool win = true;
     for (Cell * c : cells) {

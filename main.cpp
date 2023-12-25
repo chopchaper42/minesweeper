@@ -19,10 +19,11 @@ int main(int argc, char** argv) {
         std::cout << R"(--mode takes "easy", "medium" or "hard" options.)" << std::endl;
         std::cout << "Easy mode: 9*9 field, 10 mines. Medium mode: 16*16 field, 40 mines. Hard mode: 31*16 field, 99 mines." << std::endl;
         std::cout << "Game rules:" << std::endl;
-        std::cout << "There are 3 commands:" << std::endl;
+        std::cout << "There are 4 commands:" << std::endl;
         std::cout << "1. open <x> <y> to open the cell on coordinates <x> <y>. Be careful, if you hit the mine, the game will end." << std::endl;
         std::cout << "2. mark <x> <y> to mark the cell on coordinates <x> <y>." << std::endl;
         std::cout << "3. unmark <x> <y> to unmark the cell on coordinates <x> <y>." << std::endl;
+        std::cout << "4. quit to quit the game." << std::endl;
         std::cout << R"("#" cell means closed cell, "?" cell means marked cell, a cell with a number means that there are exactly so much mines around this cell.)" << std::endl;
 
         std::cout << "That's all. Good luck!" << std::endl;
@@ -41,19 +42,14 @@ int main(int argc, char** argv) {
 
     game = new Game(mode);
 
-    std::thread output(&Game::renderField, Game(mode));
-    std::thread compute(&Game::renderField, Game(mode));
-    std::thread input(&Game::renderField, Game(mode));
-
     while (game->isPlaying()) {
 
-        // output thread
+        // print the field
         game->renderField();
 
 
-        // input thread
-        std::string cmd;
-        std::string line;
+        std::string line; // line from the input stream
+        std::string token;
         std::vector<std::string> tokens;
 
         getline(std::cin, line);
@@ -61,24 +57,22 @@ int main(int argc, char** argv) {
         //tokenize the input line
         for (char c : line) {
             if (c == ' ' || c == '\t') {
-                tokens.push_back(cmd);
-                cmd = "";
+                tokens.push_back(token);
+                token = "";
                 continue;
             }
 
-            cmd += c;
+            token += c;
         }
 
-        tokens.push_back(cmd);
+        tokens.push_back(token);
 
 
-        // compute thread
         if (tokens[0] == "quit") {
             game->endGame();
             std::cout << "Game over!" << std::endl;
 
         } else if (tokens[0] == "mark") {
-            // parse coordinates, handle exceptions
             int x, y;
 
             if (tokens.size() < 3) {
@@ -112,13 +106,13 @@ int main(int argc, char** argv) {
                 continue;
             }
 
+            // mark the <X,Y> cell
             game->markCell(x, y);
 
 
         } else if (tokens[0] == "open") {
             int x, y;
 
-            // parse coordinates, open the cell
             if (tokens.size() < 3) {
                 std::cout << "Should be 3 arguments: command, x, y. Was " << tokens.size() << ". Try again: " << std::endl;
                 continue;
@@ -150,12 +144,12 @@ int main(int argc, char** argv) {
                 continue;
             }
 
+            // values starting from 0, not from 1
             size_t prog_x = x - 1;
             size_t prog_y = y - 1;
-            game->openCell(prog_x, prog_y);
 
-            if (!game->isPlaying())
-                std::cout << "Game is over!" << std::endl;
+            // opens the <X,Y> cell
+            game->openCell(prog_x, prog_y);
 
         } else if (tokens[0] == "unmark") {
             int x, y;
@@ -191,10 +185,11 @@ int main(int argc, char** argv) {
                 continue;
             }
 
+            // unmark the <X,Y> cell
             game->unmarkCell(x, y);
 
-
         } else {
+            // invalid command
             std::cout << "Bad input! Try again: " << std::endl;
             continue;
         }
